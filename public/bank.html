@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Monopoly PIX - Bank</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            margin-top: 30px;
+        }
+
+        input, select, button {
+            margin: 5px;
+            padding: 8px;
+        }
+
+        .box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .row {
+            margin-bottom: 8px;
+        }
+
+        .danger {
+            color: red;
+        }
+
+        .ok {
+            color: green;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Banco - Monopoly PIX</h2>
+
+<!-- ===================== CREATE PLAYER ===================== -->
+<h3>Criar Jogador</h3>
+
+<div class="box">
+    <input id="playerName" placeholder="nome (a-z)">
+    <input id="initialBalance" type="number" placeholder="saldo inicial">
+    <button onclick="createPlayer()">Criar</button>
+</div>
+
+
+<!-- ===================== PLAYERS LIST ===================== -->
+<h3>Jogadores</h3>
+
+<div class="box" id="players"></div>
+
+
+<!-- ===================== TRANSFER ===================== -->
+<h3>Transferir</h3>
+
+<div class="box">
+
+    <div class="row">
+        <select id="from"></select>
+        →
+        <select id="to"></select>
+    </div>
+
+    <div class="row">
+        <input id="amount" type="number" placeholder="valor">
+        <button onclick="transfer()">Enviar</button>
+    </div>
+
+</div>
+
+
+<!-- ===================== GAME CONTROL ===================== -->
+<h3>Jogo</h3>
+
+<div class="box">
+    <button onclick="saveGame()">Salvar</button>
+    <button onclick="loadGame()">Carregar</button>
+    <button onclick="newGame()">Novo Jogo</button>
+</div>
+
+
+<!-- ===================== LAST TRANSACTION ===================== -->
+<h3>Última transação</h3>
+
+<div class="box" id="lastTransaction">
+    None
+</div>
+
+
+<!-- ===================== STATUS ===================== -->
+<div id="status"></div>
+
+<!-- ================== WS STATUS ===================== -->
+<div id="wsStatus" style="padding:8px;text-align:center;font-size:12px;">
+    Conectando...
+</div>
+
+<script>
+
+let state = {};
+let ws;
+
+
+// ======================================================
+// INIT
+// ======================================================
+
+function init() {
+    connectWS();
+    loadState();
+}
+
+
+// ======================================================
+// WEBSOCKET
+// ======================================================
+
+function connectWS() {
+
+    ws = new WebSocket(`ws://${location.host}`);
+
+    ws.onmessage = (msg) => {
+
+        const data = JSON.parse(msg.data);
+
+        if (data.type === 'GAME_STATE') {
+            state = data.payload;
+            render();
+        }
+    };
+
+    ws.onclose = () => {
+        setTimeout(connectWS, 1000);
+    };
+}
+
+
+// ======================================================
+// API HELPERS
+// ======================================================
+
+async function api(url, method = 'GET', body) {
+
+    const res = await fetch(url, {
+        method,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: body ? JSON.stringify(body) : undefined
+    });
+
+    return res.json();
+}
+
+
+// ======================================================
+// ACTIONS
+// ======================================================
+
+async function createPlayer() {
+
+    const name = document.getElementById('playerName').value;
+    const initialBalance = Number(document.getElementById('initialBalance').value);
+
+    const res = await api('/api/player', 'POST', {
+        name,
+        initialBalance
+    });
+
+    showStatus(res.error || 'Jogador criado');
+}
+
+
+async function transfer() {
+
+    const from = document.getElementById('from').value;
+    const to = document.getElementById('to').value;
+    const amount = Number(document.getElementById('amount').value);
+
+    const res = await api('/api/transfer', 'POST', {
+        from,
+        to,
+        amount
+    });
+
+    showStatus(res.error || 'PIX enviado');
+}
+
+
+async function saveGame() {
+    await api('/api/game/save', 'POST');
+    showStatus('Jogo salvo');
+}
+
+async function loadGame() {
+    await api('/api/game/load', 'POST');
+    showStatus('Jogo carregado');
+}
+
+async function newGame() {
+    await api('/api/game/new', 'POST');
+    showStatus('Novo jogo iniciado');
+}
+
+
+// ======================================================
+// RENDER
+// ======================================================
+
+function render() {
+
+    if (!state.players) return;
+
+    renderPlayers();
+    renderDropdowns();
+    renderLastTransaction();
+}
+
+
+function renderPlayers() {
+
+    const div = document.getElementById('players');
+
+    div.innerHTML = state.players.map(p => `
+        <div class="row">
+            <b>${p.name}</b> - $${p.balance}
+        </div>
+    `).join('');
+}
+
+
+function renderDropdowns() {
+
+    const from = document.getElementById('from');
+    const to = document.getElementById('to');
+
+    const options = [
+        `<option value="bank">BANCO</option>`,
+        ...state.players.map(p =>
+            `<option value="${p.name}">${p.name}</option>`
+        )
+    ].join('');
+
+    from.innerHTML = options;
+    to.innerHTML = options;
+}
+
+
+function renderLastTransaction() {
+
+    const div = document.getElementById('lastTransaction');
+
+    const allTx = state.transactions || [];
+
+    if (allTx.length === 0) {
+        div.innerHTML = 'None';
+        return;
+    }
+
+    const tx = allTx[allTx.length - 1];
+
+    div.innerHTML = `
+        <div>
+            <b>${tx.from}</b> → <b>${tx.to}</b><br>
+            $${tx.amount}<br>
+            ${tx.timestamp}
+        </div>
+    `;
+}
+
+
+// ======================================================
+// STATUS
+// ======================================================
+
+function showStatus(msg) {
+
+    const div = document.getElementById('status');
+
+    div.innerHTML = `<p>${msg}</p>`;
+
+    setTimeout(() => {
+        div.innerHTML = '';
+    }, 4000);
+}
+
+function setWSStatus(status) {
+    const el = document.getElementById('wsStatus');
+    if (!el) return;
+
+    if (status === 'connected') {
+        el.innerHTML = '🟢 Conectado';
+        el.style.color = 'green';
+    } else if (status === 'disconnected') {
+        el.innerHTML = '🔴 Desconectado (tentando reconectar...)';
+        el.style.color = 'red';
+    } else {
+        el.innerHTML = '🟡 Conectando...';
+        el.style.color = 'orange';
+    }
+}
+
+// start
+init();
+
+</script>
+
+</body>
+</html>

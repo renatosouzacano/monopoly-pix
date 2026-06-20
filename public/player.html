@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monopoly PIX - Jogador</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #eef2f7;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 600px;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .balance {
+            font-size: 40px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .label {
+            text-align: center;
+            color: #666;
+        }
+
+        select,
+        input,
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        button {
+            background: #2d6cdf;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .danger {
+            background: #e74c3c;
+        }
+
+        .transaction {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .success {
+            color: #2ecc71;
+            text-align: center;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <div class="card">
+            <div class="title" id="playerName">Carregando...</div>
+
+            <div class="label">Seu saldo</div>
+            <div class="balance" id="balance">0</div>
+        </div>
+
+
+        <div class="card">
+            <div class="title">Transferir dinheiro</div>
+
+            <select id="to"></select>
+
+            <input id="amount" type="number" placeholder="Valor">
+
+            <button onclick="transferir()">Enviar PIX</button>
+
+            <div id="msg"></div>
+        </div>
+
+
+        <div class="card">
+            <div class="title">Última transação</div>
+            <div class="transaction" id="lastTransaction">Nenhuma</div>
+        </div>
+
+        <!-- ================== WS STATUS ===================== -->
+        <div id="wsStatus" style="padding:8px;text-align:center;font-size:12px;">
+            Conectando...
+        </div>
+
+
+    </div>
+
+    <script>
+
+        let state = {};
+        let ws;
+
+        let playerName = window.location.pathname.split('/').pop();
+        let deviceToken = localStorage.getItem('monopoly_device_token');
+
+        if (!deviceToken) {
+            deviceToken =
+                Date.now().toString() +
+                '-' +
+                Math.random().toString(36).substring(2);
+            localStorage.setItem('monopoly_device_token', deviceToken);
+        }
+
+
+        // ======================================================
+        // INIT
+        // ======================================================
+
+        async function init() {
+            await claimDevice();
+            connectWS();
+        }
+
+
+        // ======================================================
+        // DEVICE LOCK
+        // ======================================================
+
+        async function claimDevice() {
+
+            const res = await fetch(`/api/player/${playerName}/claim-device`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    deviceToken
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.error) {
+                document.body.innerHTML = `
+            <div style="padding:20px;text-align:center;">
+                <h2>Jogador já está em uso</h2>
+                <p>Este jogador já está aberto em outro celular.</p>
+                <p>Peça ao banqueiro para liberar o acesso.</p>
+            </div>
+        `;
+                throw new Error(data.error);
+            }
+        }
+
+
+        // ======================================================
+        // WEBSOCKET
+        // ======================================================
+
+        function connectWS() {
+
+            console.log('Conectando WS...');
+
+            ws = new WebSocket(`ws://${location.host}`);
+
+            ws.onopen = () => {
+                console.log('WS OPEN');
+                setWSStatus('connected');
+            };
+
+            ws.onerror = (e) => {
+                console.log('WS ERROR', e);
+                setWSStatus('disconnected');
+            };
+
+            ws.onclose = () => {
+                console.log('WS CLOSED');
+                setWSStatus('disconnected');
+                setTimeout(connectWS, 1000);
+            };
+
+            ws.onmessage = (msg) => {
+                console.log('WS MESSAGE');
+                const data = JSON.parse(msg.data);
+                if (data.type === 'GAME_STATE') {
+                    state = data.payload;
+                    render();
+                }
+            };
+
+            ws.onclose = () => {
+                setTimeout(connectWS, 1000);
+            };
+        }
+
+
+        // ======================================================
+        // TRANSFERÊNCIA
+        // ======================================================
+
+        async function transferir() {
+
+            const to = document.getElementById('to').value;
+            const amount = Number(document.getElementById('amount').value);
+
+            const res = await fetch('/api/transfer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    from: playerName,
+                    to,
+                    amount
+                })
+            });
+
+            const data = await res.json();
+
+            const msg = document.getElementById('msg');
+
+            if (data.error) {
+                msg.innerHTML = `<div class="error">${data.error}</div>`;
+            } else {
+                msg.innerHTML = `<div class="success">Transferência realizada!</div>`;
+            }
+
+            setTimeout(() => msg.innerHTML = '', 2000);
+        }
+
+
+        // ======================================================
+        // RENDER
+        // ======================================================
+
+        function render() {
+
+            const player = state.players.find(p => p.name === playerName);
+
+            if (!player) return;
+
+            document.getElementById('playerName').innerText = player.name;
+            document.getElementById('balance').innerText = `$${player.balance}`;
+
+            renderDropdown();
+            renderLastTransaction(player);
+        }
+
+
+        function renderDropdown() {
+
+            const select = document.getElementById('to');
+
+            const options = [
+                `<option value="bank">Banco</option>`,
+                ...state.players
+                    .filter(p => p.name !== playerName)
+                    .map(p => `<option value="${p.name}">${p.name}</option>`)
+            ].join('');
+
+            select.innerHTML = options;
+        }
+
+
+        function renderLastTransaction(player) {
+
+            const div = document.getElementById('lastTransaction');
+
+            if (!player.lastTransaction) {
+                div.innerText = 'Nenhuma transação ainda';
+                return;
+            }
+
+            const t = player.lastTransaction;
+
+            const tipo = t.type === 'IN' ? 'Recebido' : 'Enviado';
+
+            div.innerHTML = `
+        <b>${tipo}</b><br>
+        ${t.otherParty}<br>
+        $${t.amount}<br>
+        <small>${t.timestamp}</small>
+    `;
+        }
+
+
+        function setWSStatus(status) {
+            const el = document.getElementById('wsStatus');
+            if (!el) return;
+
+            if (status === 'connected') {
+                el.innerHTML = '🟢 Conectado';
+                el.style.color = 'green';
+            } else if (status === 'disconnected') {
+                el.innerHTML = '🔴 Desconectado (tentando reconectar...)';
+                el.style.color = 'red';
+            } else {
+                el.innerHTML = '🟡 Conectando...';
+                el.style.color = 'orange';
+            }
+        }
+
+
+        // ======================================================
+        // START
+        // ======================================================
+
+        init();
+
+    </script>
+
+</body>
+
+</html>
