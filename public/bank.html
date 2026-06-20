@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Monopoly PIX - Bank</title>
@@ -13,7 +14,9 @@
             margin-top: 30px;
         }
 
-        input, select, button {
+        input,
+        select,
+        button {
             margin: 5px;
             padding: 8px;
         }
@@ -40,278 +43,316 @@
 
 <body>
 
-<h2>Banco - Monopoly PIX</h2>
+    <h2>Banco - Monopoly PIX</h2>
 
-<!-- ===================== CREATE PLAYER ===================== -->
-<h3>Criar Jogador</h3>
+    <!-- ===================== CREATE PLAYER ===================== -->
+    <h3>Criar Jogador</h3>
 
-<div class="box">
-    <input id="playerName" placeholder="nome (a-z)">
-    <input id="initialBalance" type="number" placeholder="saldo inicial">
-    <button onclick="createPlayer()">Criar</button>
-</div>
-
-
-<!-- ===================== PLAYERS LIST ===================== -->
-<h3>Jogadores</h3>
-
-<div class="box" id="players"></div>
-
-
-<!-- ===================== TRANSFER ===================== -->
-<h3>Transferir</h3>
-
-<div class="box">
-
-    <div class="row">
-        <select id="from"></select>
-        →
-        <select id="to"></select>
+    <div class="box">
+        <input id="playerName" placeholder="nome (a-z)">
+        <input id="initialBalance" type="number" placeholder="saldo inicial">
+        <button onclick="createPlayer()">Criar</button>
     </div>
 
-    <div class="row">
-        <input id="amount" type="number" placeholder="valor">
-        <button onclick="transfer()">Enviar</button>
-    </div>
 
-</div>
+    <!-- ===================== PLAYERS LIST ===================== -->
+    <h3>Jogadores</h3>
 
-
-<!-- ===================== GAME CONTROL ===================== -->
-<h3>Jogo</h3>
-
-<div class="box">
-    <button onclick="saveGame()">Salvar</button>
-    <button onclick="loadGame()">Carregar</button>
-    <button onclick="newGame()">Novo Jogo</button>
-</div>
+    <div class="box" id="players"></div>
 
 
-<!-- ===================== LAST TRANSACTION ===================== -->
-<h3>Última transação</h3>
+    <!-- ===================== TRANSFER ===================== -->
+    <h3>Transferir</h3>
 
-<div class="box" id="lastTransaction">
-    None
-</div>
+    <div class="box">
 
-
-<!-- ===================== STATUS ===================== -->
-<div id="status"></div>
-
-<!-- ================== WS STATUS ===================== -->
-<div id="wsStatus" style="padding:8px;text-align:center;font-size:12px;">
-    Conectando...
-</div>
-
-<script>
-
-let state = {};
-let ws;
-
-
-// ======================================================
-// INIT
-// ======================================================
-
-function init() {
-    connectWS();
-    loadState();
-}
-
-
-// ======================================================
-// WEBSOCKET
-// ======================================================
-
-function connectWS() {
-
-    ws = new WebSocket(`ws://${location.host}`);
-
-    ws.onmessage = (msg) => {
-
-        const data = JSON.parse(msg.data);
-
-        if (data.type === 'GAME_STATE') {
-            state = data.payload;
-            render();
-        }
-    };
-
-    ws.onclose = () => {
-        setTimeout(connectWS, 1000);
-    };
-}
-
-
-// ======================================================
-// API HELPERS
-// ======================================================
-
-async function api(url, method = 'GET', body) {
-
-    const res = await fetch(url, {
-        method,
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: body ? JSON.stringify(body) : undefined
-    });
-
-    return res.json();
-}
-
-
-// ======================================================
-// ACTIONS
-// ======================================================
-
-async function createPlayer() {
-
-    const name = document.getElementById('playerName').value;
-    const initialBalance = Number(document.getElementById('initialBalance').value);
-
-    const res = await api('/api/player', 'POST', {
-        name,
-        initialBalance
-    });
-
-    showStatus(res.error || 'Jogador criado');
-}
-
-
-async function transfer() {
-
-    const from = document.getElementById('from').value;
-    const to = document.getElementById('to').value;
-    const amount = Number(document.getElementById('amount').value);
-
-    const res = await api('/api/transfer', 'POST', {
-        from,
-        to,
-        amount
-    });
-
-    showStatus(res.error || 'PIX enviado');
-}
-
-
-async function saveGame() {
-    await api('/api/game/save', 'POST');
-    showStatus('Jogo salvo');
-}
-
-async function loadGame() {
-    await api('/api/game/load', 'POST');
-    showStatus('Jogo carregado');
-}
-
-async function newGame() {
-    await api('/api/game/new', 'POST');
-    showStatus('Novo jogo iniciado');
-}
-
-
-// ======================================================
-// RENDER
-// ======================================================
-
-function render() {
-
-    if (!state.players) return;
-
-    renderPlayers();
-    renderDropdowns();
-    renderLastTransaction();
-}
-
-
-function renderPlayers() {
-
-    const div = document.getElementById('players');
-
-    div.innerHTML = state.players.map(p => `
         <div class="row">
-            <b>${p.name}</b> - $${p.balance}
+            <select id="from"></select>
+            →
+            <select id="to"></select>
         </div>
+
+        <div class="row">
+            <input id="amount" type="number" placeholder="valor">
+            <button onclick="transfer()">Enviar</button>
+        </div>
+
+    </div>
+
+
+    <!-- ===================== GAME CONTROL ===================== -->
+    <h3>Jogo</h3>
+
+    <div class="box">
+        <button onclick="saveGame()">Salvar</button>
+        <button onclick="loadGame()">Carregar</button>
+        <button onclick="newGame()">Novo Jogo</button>
+    </div>
+
+
+    <!-- ===================== LAST TRANSACTION ===================== -->
+    <h3>Última transação</h3>
+
+    <div class="box" id="lastTransaction">
+        None
+    </div>
+
+
+    <!-- ===================== STATUS ===================== -->
+    <div id="status"></div>
+
+    <!-- ================== WS STATUS ===================== -->
+    <div id="wsStatus" style="padding:8px;text-align:center;font-size:12px;">
+        Conectando...
+    </div>
+
+    <script>
+
+        let state = {};
+        let ws;
+
+
+        // ======================================================
+        // INIT
+        // ======================================================
+
+        function init() {
+            connectWS();
+            loadState();
+        }
+
+
+        // ======================================================
+        // WEBSOCKET
+        // ======================================================
+
+        function connectWS() {
+
+            ws = new WebSocket(`ws://${location.host}`);
+
+            ws.onmessage = (msg) => {
+
+                const data = JSON.parse(msg.data);
+
+                if (data.type === 'GAME_STATE') {
+                    state = data.payload;
+                    render();
+                }
+            };
+
+            ws.onclose = () => {
+                setTimeout(connectWS, 1000);
+            };
+        }
+
+
+        // ======================================================
+        // API HELPERS
+        // ======================================================
+
+        async function api(url, method = 'GET', body) {
+
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: body ? JSON.stringify(body) : undefined
+            });
+
+            return res.json();
+        }
+
+
+        // ======================================================
+        // ACTIONS
+        // ======================================================
+
+        async function createPlayer() {
+
+            const name = document.getElementById('playerName').value;
+            const initialBalance = Number(document.getElementById('initialBalance').value);
+
+            const res = await api('/api/player', 'POST', {
+                name,
+                initialBalance
+            });
+
+            showStatus(res.error || 'Jogador criado');
+        }
+
+        async function transfer() {
+
+            const from = document.getElementById('from').value;
+            const to = document.getElementById('to').value;
+            const amount = Number(document.getElementById('amount').value);
+
+            const res = await api('/api/transfer', 'POST', {
+                from,
+                to,
+                amount
+            });
+
+            showStatus(res.error || 'PIX enviado');
+        }
+
+        async function releaseDevice(playerName) {
+
+            if (!confirm(
+                `Liberar o acesso do jogador "${playerName}"?`
+            )) {
+                return;
+            }
+
+            const res = await api(
+                `/api/player/${playerName}/release-device`,
+                'POST'
+            );
+
+            if (res.error) {
+                showStatus(res.error);
+            } else {
+                showStatus(
+                    `Aparelho liberado para ${playerName}`
+                );
+            }
+        }
+
+        async function saveGame() {
+            await api('/api/game/save', 'POST');
+            showStatus('Jogo salvo');
+        }
+
+        async function loadGame() {
+            await api('/api/game/load', 'POST');
+            showStatus('Jogo carregado');
+        }
+
+        async function newGame() {
+            await api('/api/game/new', 'POST');
+            showStatus('Novo jogo iniciado');
+        }
+
+
+        // ======================================================
+        // RENDER
+        // ======================================================
+
+        function render() {
+
+            if (!state.players) return;
+
+            renderPlayers();
+            renderDropdowns();
+            renderLastTransaction();
+        }
+
+
+        function renderPlayers() {
+
+            const div = document.getElementById('players');
+
+            div.innerHTML = state.players.map(p => `
+
+        <div class="row"
+             style="
+                display:flex;
+                align-items:center;
+                gap:10px;
+                margin-bottom:8px;
+             ">
+
+            <span style="flex:1;">
+                <b>${p.name}</b> - ${p.balance}
+                ${p.deviceToken ? '🟢' : '⚪'}                
+            </span>
+
+            <button onclick="releaseDevice('${p.name}')">
+                Liberar aparelho
+            </button>
+
+        </div>
+
     `).join('');
-}
+        }
 
 
-function renderDropdowns() {
+        function renderDropdowns() {
 
-    const from = document.getElementById('from');
-    const to = document.getElementById('to');
+            const from = document.getElementById('from');
+            const to = document.getElementById('to');
 
-    const options = [
-        `<option value="bank">BANCO</option>`,
-        ...state.players.map(p =>
-            `<option value="${p.name}">${p.name}</option>`
-        )
-    ].join('');
+            const options = [
+                `<option value="bank">BANCO</option>`,
+                ...state.players.map(p =>
+                    `<option value="${p.name}">${p.name}</option>`
+                )
+            ].join('');
 
-    from.innerHTML = options;
-    to.innerHTML = options;
-}
+            from.innerHTML = options;
+            to.innerHTML = options;
+        }
 
 
-function renderLastTransaction() {
+        function renderLastTransaction() {
 
-    const div = document.getElementById('lastTransaction');
+            const div = document.getElementById('lastTransaction');
 
-    const allTx = state.transactions || [];
+            const allTx = state.transactions || [];
 
-    if (allTx.length === 0) {
-        div.innerHTML = 'None';
-        return;
-    }
+            if (allTx.length === 0) {
+                div.innerHTML = 'None';
+                return;
+            }
 
-    const tx = allTx[allTx.length - 1];
+            const tx = allTx[allTx.length - 1];
 
-    div.innerHTML = `
+            div.innerHTML = `
         <div>
             <b>${tx.from}</b> → <b>${tx.to}</b><br>
             $${tx.amount}<br>
             ${tx.timestamp}
         </div>
     `;
-}
+        }
 
 
-// ======================================================
-// STATUS
-// ======================================================
+        // ======================================================
+        // STATUS
+        // ======================================================
 
-function showStatus(msg) {
+        function showStatus(msg) {
 
-    const div = document.getElementById('status');
+            const div = document.getElementById('status');
 
-    div.innerHTML = `<p>${msg}</p>`;
+            div.innerHTML = `<p>${msg}</p>`;
 
-    setTimeout(() => {
-        div.innerHTML = '';
-    }, 4000);
-}
+            setTimeout(() => {
+                div.innerHTML = '';
+            }, 4000);
+        }
 
-function setWSStatus(status) {
-    const el = document.getElementById('wsStatus');
-    if (!el) return;
+        function setWSStatus(status) {
+            const el = document.getElementById('wsStatus');
+            if (!el) return;
 
-    if (status === 'connected') {
-        el.innerHTML = '🟢 Conectado';
-        el.style.color = 'green';
-    } else if (status === 'disconnected') {
-        el.innerHTML = '🔴 Desconectado (tentando reconectar...)';
-        el.style.color = 'red';
-    } else {
-        el.innerHTML = '🟡 Conectando...';
-        el.style.color = 'orange';
-    }
-}
+            if (status === 'connected') {
+                el.innerHTML = '🟢 Conectado';
+                el.style.color = 'green';
+            } else if (status === 'disconnected') {
+                el.innerHTML = '🔴 Desconectado (tentando reconectar...)';
+                el.style.color = 'red';
+            } else {
+                el.innerHTML = '🟡 Conectando...';
+                el.style.color = 'orange';
+            }
+        }
 
-// start
-init();
+        // start
+        init();
 
-</script>
+    </script>
 
 </body>
+
 </html>
