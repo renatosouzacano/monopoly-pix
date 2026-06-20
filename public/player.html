@@ -275,7 +275,7 @@
             if (!player) return;
 
             document.getElementById('playerName').innerText = player.name;
-            document.getElementById('balance').innerText = `$${player.balance}`;
+            document.getElementById('balance').innerText = formatMoney(player.balance);
 
             renderDropdown();
             renderLastTransaction(player);
@@ -313,9 +313,13 @@
             div.innerHTML = `
         <b>${tipo}</b><br>
         ${t.otherParty}<br>
-        $${t.amount}<br>
+        ${formatMoney(t.amount)}<br>
         <small>${t.timestamp}</small>
     `;
+        }
+
+        function formatMoney(value) {
+            return Number(value).toLocaleString('pt-BR');
         }
 
 

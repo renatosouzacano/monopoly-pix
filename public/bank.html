@@ -263,7 +263,7 @@
              ">
 
             <span style="flex:1;">
-                <b>${p.name}</b> - ${p.balance}
+                <b>${p.name}</b> : ${formatMoney(p.balance)}
                 ${p.deviceToken ? '🟢' : '⚪'}                
             </span>
 
@@ -310,10 +310,14 @@
             div.innerHTML = `
         <div>
             <b>${tx.from}</b> → <b>${tx.to}</b><br>
-            $${tx.amount}<br>
+            ${formatMoney(tx.amount)}<br>
             ${tx.timestamp}
         </div>
     `;
+        }
+
+        function formatMoney(value) {
+            return Number(value).toLocaleString('pt-BR');
         }
 
 
