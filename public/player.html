@@ -114,7 +114,7 @@
             <div class="title">Transferir dinheiro</div>
             <div class="box">
                 <select id="to"></select>
-                <input id="amount" type="number" placeholder="Valor">
+                <input id="amount" type="text" placeholder="Valor">
                 <button onclick="transferir()">Enviar PIX</button>
             </div>
             <div id="msg"></div>
@@ -159,6 +159,21 @@
             await claimDevice();
             connectWS();
         }
+
+
+        // ======================================================
+        // AMOUNT FORMATTER
+        // ======================================================
+
+        const amountInput = document.getElementById('amount');
+        amountInput.addEventListener('input', () => {
+            const digits = amountInput.value.replace(/\D/g, '');
+            if (!digits) {
+                amountInput.value = '';
+                return;
+            }
+            amountInput.value = Number(digits).toLocaleString('pt-BR');
+        });
 
 
         // ======================================================
@@ -238,8 +253,12 @@
         async function transferir() {
 
             const to = document.getElementById('to').value;
-            const amount = Number(document.getElementById('amount').value);
-
+            const amount = Number(
+                document
+                    .getElementById('amount')
+                    .value
+                    .replace(/\./g, '')
+            );
             const res = await fetch('/api/transfer', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
