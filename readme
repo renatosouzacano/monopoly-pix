@@ -1,0 +1,282 @@
+# 📦 Monopoly PIX (MVP)
+
+Sistema de banco eletrônico para jogo Monopoly (Banco Imobiliário) usando rede local com WebSocket.
+Não é uma luta contra o imperialismo norte-americano e sua tentativa de imposição do uso de cartões de crédito, mas PIX é qualidade de vida. E ponto.
+Nasceu em um dia que minha filha queria jogar Monopoly versão moderna com os amigos, mas a maquininha de cartão estava sem pilhas.
+É uma versão digital simples e divertida do sistema de dinheiro do Monopoly, funcionando em rede local com múltiplos jogadores usando celulares.
+É um MVP de final de semana, vibe codado com ajuda da versão gratuita do ChatGPT, a quem agradeço.
+
+---
+
+# 🚀 Visão geral
+
+Este projeto substitui o dinheiro físico do Monopoly por:
+
+* transferências entre jogadores
+* banco com saldo infinito
+* interface para banqueiro e jogadores
+* atualização em tempo real via WebSocket
+* execução em rede local (Wi-Fi)
+
+---
+
+# 🧰 Pré-requisitos
+
+Antes de começar, instale:
+
+## 1. Node.js (obrigatório)
+
+Baixe e instale:
+
+👉 [https://nodejs.org/](https://nodejs.org/)
+
+Recomendado:
+
+* versão LTS (long term support)
+
+Verifique instalação:
+
+```bash
+node -v
+npm -v
+```
+
+---
+
+## 2. Git (opcional, mas recomendado)
+Se não instalar, baixe os arquivos do github manualmente
+
+👉 [https://git-scm.com/](https://git-scm.com/)
+
+Verificar:
+
+```bash
+git --version
+```
+
+---
+
+# 📥 Clonar o projeto
+
+Abra o terminal:
+
+```bash
+git clone https://github.com/renatosouzacano/monopoly-pix
+```
+
+Entre na pasta:
+
+```bash
+cd monopoly-pix
+```
+
+---
+
+# 📦 Instalar dependências
+
+Dentro da pasta do projeto:
+
+```bash
+npm install
+```
+
+Isso instala:
+
+* Express
+* WebSocket (`ws`)
+* dependências do servidor
+
+---
+
+# ▶️ Executar o servidor
+
+```bash
+node server.js
+```
+
+ou (se existir script):
+
+```bash
+npm start
+```
+
+---
+
+# 🌐 Acessar o sistema
+
+## No computador (servidor)
+
+```
+http://localhost:3000/monopoly/bank
+```
+
+---
+
+## No celular (mesma rede Wi-Fi)
+
+Descubra o IP do computador:
+
+### Windows:
+
+```bash
+ipconfig
+```
+
+Procure algo como:
+
+```
+IPv4 Address . . . . . . : 192.168.1.123
+```
+
+---
+
+### Acesse no celular:
+
+Banco:
+
+```
+http://192.168.1.123:3000/monopoly/bank
+```
+
+Jogador:
+
+```
+http://192.168.1.123:3000/monopoly/player/NOME_DO_JOGADOR
+```
+
+---
+
+
+
+# 🔥 Funcionalidades
+
+## Banco
+
+* salvar/carregar/novo jogo
+* criar jogadores com saldo inicial
+* liberar dispositivo de jogador (caso troque de celular ou caia a conexão)
+* transferir dinheiro
+
+## Jogador
+
+* ver saldo em tempo real
+* enviar dinheiro para outros jogadores ou banco
+* ver última transação
+
+---
+
+# 💾 Persistência
+
+O estado do jogo é salvo em:
+
+```text
+/data/game-state.json
+```
+
+Inclui:
+
+* jogadores
+* saldos
+* histórico de transações
+
+---
+
+# 📡 Comunicação em tempo real
+
+O sistema usa WebSocket:
+
+* atualizações instantâneas de saldo
+* sincronização entre banco e jogadores
+* sem necessidade de refresh
+
+---
+
+# 🔒 Observações importantes
+
+* Este projeto é feito para uso em **rede local (LAN)**
+* Não possui autenticação
+* Não é seguro para uso público na internet
+* Um jogador só pode usar um dispositivo por vez
+
+---
+
+# ⚠️ Problemas comuns
+
+## 1. Celular não acessa
+
+* verifique se estão na mesma rede Wi-Fi
+* verifique firewall do Windows
+* confirme IP correto do computador
+
+---
+
+## 2. Porta bloqueada
+
+Se necessário, abra porta 3000 no firewall:
+
+* Painel de Controle → Firewall
+* Permitir aplicativo ou porta TCP 3000
+
+---
+
+## 3. WebSocket não conecta
+
+* usar `ws://` (não https)
+* garantir IP correto no acesso
+* xingue o desenvolvedor (às vezes funciona)
+
+---
+
+# 🧪 Teste rápido
+
+1. iniciar servidor
+2. abrir banco no PC
+3. criar jogador
+4. abrir jogador no celular
+5. transferir dinheiro
+6. verificar atualização em tempo real
+
+---
+
+# 🧠 Tecnologias usadas
+
+* Node.js
+* Express
+* WebSocket (`ws`)
+* HTML + CSS + JavaScript puro
+* JSON para persistência local
+
+---
+
+# 📌 Estrutura do projeto
+
+```text
+monopoly-pix/
+│
+├── server.js
+├── package.json
+│
+├── services/
+│   ├── gameStore.js
+│   └── websocket.js
+│
+├── public/
+│   ├── bank.html
+│   └── player.html
+│
+└── data/
+    └── game-state.json
+```
+
+---
+
+# 🚀 Executar em outros computadores
+
+Basta repetir:
+
+```bash
+git clone ...
+npm install
+node server.js
+```
+
