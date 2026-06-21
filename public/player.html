@@ -9,8 +9,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            background: #eef2f7;
+            margin: 10px;
+            background: #79abe8;
             display: flex;
             justify-content: center;
         }
@@ -43,11 +43,9 @@
         }
 
         select,
-        input,
-        button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
+        input {
+            padding: 10px;
+            margin: 4px;
             border-radius: 8px;
             border: 1px solid #ddd;
             font-size: 16px;
@@ -57,6 +55,9 @@
             background: #2d6cdf;
             color: white;
             border: none;
+            border-radius: 8px;
+            margin: 4px;
+            padding: 10px 14px;
             cursor: pointer;
         }
 
@@ -64,13 +65,15 @@
             transform: scale(0.98);
         }
 
-        .danger {
-            background: #e74c3c;
+        .row {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center
         }
 
-        .transaction {
-            font-size: 16px;
-            line-height: 1.6;
+        .danger {
+            background: #e74c3c;
         }
 
         .hidden {
@@ -102,7 +105,6 @@
 
         <div class="card">
             <div class="title" id="playerName">Carregando...</div>
-
             <div class="label">Seu saldo</div>
             <div class="balance" id="balance">0</div>
         </div>
@@ -110,20 +112,18 @@
 
         <div class="card">
             <div class="title">Transferir dinheiro</div>
-
-            <select id="to"></select>
-
-            <input id="amount" type="number" placeholder="Valor">
-
-            <button onclick="transferir()">Enviar PIX</button>
-
+            <div class="box">
+                <select id="to"></select>
+                <input id="amount" type="number" placeholder="Valor">
+                <button onclick="transferir()">Enviar PIX</button>
+            </div>
             <div id="msg"></div>
         </div>
 
 
         <div class="card">
             <div class="title">Última transação</div>
-            <div class="transaction" id="lastTransaction">Nenhuma</div>
+            <div class="box" id="lastTransaction">Nenhuma</div>
         </div>
 
         <!-- ================== WS STATUS ===================== -->
@@ -308,13 +308,12 @@
 
             const t = player.lastTransaction;
 
-            const tipo = t.type === 'IN' ? 'Recebido' : 'Enviado';
+            const tipo = t.type === 'IN' ? 'Recebido de ' : 'Enviado para ';
 
             div.innerHTML = `
-        <b>${tipo}</b><br>
-        ${t.otherParty}<br>
+        <b>${tipo}${t.otherParty}<br></b>
         ${formatMoney(t.amount)}<br>
-        <small>${t.timestamp}</small>
+        ${t.timestamp}
     `;
         }
 

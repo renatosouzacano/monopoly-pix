@@ -7,28 +7,54 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 10px;
+            background: #c9dbf8;
+            display: flex;
+            justify-content: center;
         }
 
-        h2 {
-            margin-top: 30px;
+        .app {
+            width: 100%;
+            max-width: 600px;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         }
 
         input,
-        select,
-        button {
-            margin: 5px;
-            padding: 8px;
+        select {
+            padding: 10px;
+            margin: 4px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
         }
 
-        .box {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-top: 10px;
+        button {
+            background: #2d6cdf;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin: 4px;
+            padding: 10px 14px;
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: scale(0.98);
         }
 
         .row {
             margin-bottom: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center
         }
 
         .danger {
@@ -38,72 +64,78 @@
         .ok {
             color: green;
         }
+
+        .title {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 
 <body>
 
-    <h2>Banco - Monopoly PIX</h2>
-
-    <!-- ===================== CREATE PLAYER ===================== -->
-    <h3>Criar Jogador</h3>
-
-    <div class="box">
-        <input id="playerName" placeholder="nome (a-z)">
-        <input id="initialBalance" type="number" placeholder="saldo inicial">
-        <button onclick="createPlayer()">Criar</button>
-    </div>
+    <div class="app">
+        <div class="title">Banco - Monopoly PIX</div>
 
 
-    <!-- ===================== PLAYERS LIST ===================== -->
-    <h3>Jogadores</h3>
-
-    <div class="box" id="players"></div>
-
-
-    <!-- ===================== TRANSFER ===================== -->
-    <h3>Transferir</h3>
-
-    <div class="box">
-
-        <div class="row">
-            <select id="from"></select>
-            →
-            <select id="to"></select>
+        <!-- ===================== GAME CONTROL ===================== -->
+        <div class="card">
+            <div class="title">Jogo</div>
+            <div class="box">
+                <div class="row">
+                    <button onclick="saveGame()">Salvar</button>
+                    <button onclick="loadGame()">Carregar</button>
+                    <button onclick="newGame()">Novo Jogo</button>
+                </div>
+            </div>
         </div>
 
-        <div class="row">
-            <input id="amount" type="number" placeholder="valor">
-            <button onclick="transfer()">Enviar</button>
+
+        <!-- ===================== CREATE PLAYER ===================== -->
+        <div class="card">
+            <div class="title">Criar jogador</div>
+            <input id="playerName" placeholder="nome (a-z)">
+            <input id="initialBalance" type="number" placeholder="saldo inicial">
+            <button onclick="createPlayer()">Criar</button>
         </div>
 
-    </div>
+
+        <!-- ===================== PLAYERS LIST ===================== -->
+        <div class="card">
+            <div class="title">Jogadores</div>
+            <div class="box" id="players"></div>
+        </div>
 
 
-    <!-- ===================== GAME CONTROL ===================== -->
-    <h3>Jogo</h3>
-
-    <div class="box">
-        <button onclick="saveGame()">Salvar</button>
-        <button onclick="loadGame()">Carregar</button>
-        <button onclick="newGame()">Novo Jogo</button>
-    </div>
-
-
-    <!-- ===================== LAST TRANSACTION ===================== -->
-    <h3>Última transação</h3>
-
-    <div class="box" id="lastTransaction">
-        None
-    </div>
+        <!-- ===================== TRANSFER ===================== -->
+        <div class="card">
+            <div class="title">Transferir dinheiro</div>
+            <div class="box">
+                <select id="from"></select>
+                →
+                <select id="to"></select>
+                <input id="amount" type="number" placeholder="Valor">
+                <button onclick="transfer()">Enviar PIX</button>
+            </div>
+        </div>
 
 
-    <!-- ===================== STATUS ===================== -->
-    <div id="status"></div>
+        <!-- ===================== LAST TRANSACTION ===================== -->
+        <div class="card">
+            <div class="title">Última transação</div>
+            <div class="box" id="lastTransaction">Nenhuma</div>
+        </div>
 
-    <!-- ================== WS STATUS ===================== -->
-    <div id="wsStatus" style="padding:8px;text-align:center;font-size:12px;">
-        Conectando...
+
+        <!-- ===================== STATUS ===================== -->
+        <div id="status"></div>
+
+        <!-- ================== WS STATUS ===================== -->
+        <div id="wsStatus" style="padding:8px;text-align:center;font-size:12px;">
+            Conectando...
+        </div>
+
     </div>
 
     <script>
@@ -117,8 +149,8 @@
         // ======================================================
 
         function init() {
+            setWSStatus('connecting');
             connectWS();
-            loadState();
         }
 
 
@@ -127,20 +159,27 @@
         // ======================================================
 
         function connectWS() {
-
             ws = new WebSocket(`ws://${location.host}`);
 
+            ws.onopen = () => {
+                setWSStatus('connected');
+            };
+
             ws.onmessage = (msg) => {
-
                 const data = JSON.parse(msg.data);
-
                 if (data.type === 'GAME_STATE') {
                     state = data.payload;
                     render();
                 }
             };
 
+            ws.onerror = (err) => {
+                console.error('WebSocket error', err);
+                setWSStatus('disconnected');
+            };
+
             ws.onclose = () => {
+                setWSStatus('disconnected');
                 setTimeout(connectWS, 1000);
             };
         }
@@ -301,7 +340,7 @@
             const allTx = state.transactions || [];
 
             if (allTx.length === 0) {
-                div.innerHTML = 'None';
+                div.innerHTML = 'Nenhuma transação';
                 return;
             }
 
@@ -337,6 +376,7 @@
         }
 
         function setWSStatus(status) {
+            console.log("Status:", status)
             const el = document.getElementById('wsStatus');
             if (!el) return;
 
