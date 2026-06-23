@@ -69,11 +69,7 @@
             margin-bottom: 8px;
             display: flex;
             justify-content: center;
-            align-items: center
-        }
-
-        .danger {
-            background: #e74c3c;
+            align-items: center;
         }
 
         .hidden {
@@ -112,18 +108,16 @@
 
         <div class="card">
             <div class="title">Transferir dinheiro</div>
-            <div class="box">
-                <select id="to"></select>
-                <input id="amount" type="text" placeholder="Valor">
-                <button onclick="transferir()">Enviar PIX</button>
-            </div>
+            <select id="to"></select>
+            <input id="amount" type="text" placeholder="Valor">
+            <button onclick="transferir()">Enviar PIX</button>
             <div id="msg"></div>
         </div>
 
 
         <div class="card">
             <div class="title">Última transação</div>
-            <div class="box" id="lastTransaction">Nenhuma</div>
+            <div id="lastTransaction">Nenhuma</div>
         </div>
 
         <!-- ================== WS STATUS ===================== -->
@@ -194,12 +188,12 @@
 
             if (data.error) {
                 document.body.innerHTML = `
-            <div style="padding:20px;text-align:center;">
-                <h2>Jogador já está em uso</h2>
-                <p>Este jogador já está aberto em outro celular.</p>
-                <p>Peça ao banqueiro para liberar o acesso.</p>
-            </div>
-        `;
+                    <div style="padding:20px;text-align:center;">
+                        <h2>Jogador já está em uso</h2>
+                        <p>Este jogador já está aberto em outro celular.</p>
+                        <p>Peça ao banqueiro para liberar o acesso.</p>
+                    </div>
+                `;
                 throw new Error(data.error);
             }
         }
@@ -240,9 +234,6 @@
                 }
             };
 
-            ws.onclose = () => {
-                setTimeout(connectWS, 1000);
-            };
         }
 
 

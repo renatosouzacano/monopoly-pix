@@ -27,13 +27,11 @@ function findPlayer(name) {
 function validatePlayerName(name) {
 
     if (!name || typeof name !== 'string') {
-        throw new Error('Invalid player name');
+        throw new Error('Nome de jogador inválido');
     }
 
     if (!/^[a-z]+$/.test(name)) {
-        throw new Error(
-            'O nome do jogador deve conter apenas letras minúsculas [a-z]'
-        );
+        throw new Error('O nome do jogador deve conter apenas letras minúsculas [a-z]');
     }
 }
 
@@ -160,9 +158,7 @@ function claimPlayerDevice(name, deviceToken) {
         player.deviceToken &&
         player.deviceToken !== deviceToken
     ) {
-        throw new Error(
-            'Já conectado em outro dispositivo.'
-        );
+        throw new Error('Já conectado em outro dispositivo.');
     }
 
     player.deviceToken = deviceToken;
@@ -185,6 +181,10 @@ function releasePlayerDevice(name) {
     player.deviceToken = null;
 
     saveGame();
+
+    return {
+        success: true
+    };
 }
 
 
@@ -217,7 +217,7 @@ function transfer(from, to, amount) {
         throw new Error('Jogador de destino não encontrado');
     }
 
-    // valida saldo
+    // validate balance
 
     if (!fromIsBank) {
 

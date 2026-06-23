@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
@@ -54,15 +54,7 @@
             margin-bottom: 8px;
             display: flex;
             justify-content: center;
-            align-items: center
-        }
-
-        .danger {
-            color: red;
-        }
-
-        .ok {
-            color: green;
+            align-items: center;
         }
 
         .title {
@@ -82,12 +74,10 @@
         <!-- ===================== GAME CONTROL ===================== -->
         <div class="card">
             <div class="title">Jogo</div>
-            <div class="box">
-                <div class="row">
-                    <button onclick="saveGame()">Salvar</button>
-                    <button onclick="loadGame()">Carregar</button>
-                    <button onclick="newGame()">Novo Jogo</button>
-                </div>
+            <div class="row">
+                <button onclick="saveGame()">Salvar</button>
+                <button onclick="loadGame()">Carregar</button>
+                <button onclick="newGame()">Novo Jogo</button>
             </div>
         </div>
 
@@ -104,27 +94,25 @@
         <!-- ===================== PLAYERS LIST ===================== -->
         <div class="card">
             <div class="title">Jogadores</div>
-            <div class="box" id="players"></div>
+            <div id="players"></div>
         </div>
 
 
         <!-- ===================== TRANSFER ===================== -->
         <div class="card">
             <div class="title">Transferir dinheiro</div>
-            <div class="box">
-                <select id="from"></select>
-                →
-                <select id="to"></select>
-                <input id="amount" type="text" placeholder="Valor">
-                <button onclick="transfer()">Enviar PIX</button>
-            </div>
+            <select id="from"></select>
+            →
+            <select id="to"></select>
+            <input id="amount" type="text" placeholder="Valor">
+            <button onclick="transfer()">Enviar PIX</button>
         </div>
 
 
         <!-- ===================== LAST TRANSACTION ===================== -->
         <div class="card">
             <div class="title">Última transação</div>
-            <div class="box" id="lastTransaction">Nenhuma</div>
+            <div id="lastTransaction">Nenhuma</div>
         </div>
 
 

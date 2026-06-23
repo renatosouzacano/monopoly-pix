@@ -30,19 +30,16 @@ function initialize(server) {
             clients.delete(ws);
         });
 
-        ws.on('error', () => {
+        ws.on('error', (error) => {
+            console.error('[WebSocket Error]', error.message || error);
             clients.delete(ws);
-
-            ws.onopen = () => setWSStatus('connected');
-
-            ws.onclose = () => {
-                setWSStatus('disconnected');
-                setTimeout(connectWS, 1000);
-            };
-
-            ws.onerror = () => setWSStatus('disconnected');
-
         });
+
+    });
+
+    // Log server-level errors
+    wss.on('error', (error) => {
+        console.error('[WebSocket Server Error]', error.message || error);
     });
 }
 

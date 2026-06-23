@@ -51,7 +51,7 @@ app.get('/api/player/:name', (req, res) => {
 
     if (!player) {
         return res.status(404).json({
-            error: 'Player not found'
+            error: 'Jogador não encontrado'
         });
     }
 
@@ -267,7 +267,7 @@ try {
 
 } catch (err) {
 
-    console.log('No saved game found.');
+    console.log('Nenhum jogo salvo encontrado.');
 }
 
 server.listen(PORT, () => {
